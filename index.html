@@ -1,0 +1,23 @@
+<html>
+    <head></head>
+    <body>
+        <div>
+
+        </div>
+        <style>
+            div {
+                display: inline-block;
+                background-color: red;
+                width: 1000px;
+                height: 1000px;
+            }
+        </style>
+        <script>
+            var div = document.querySelector('div');
+
+            div.addEventListener('touchmove', function() {
+                window.navigator.vibrate(50);
+            })
+        </script>
+    </body>
+</html>

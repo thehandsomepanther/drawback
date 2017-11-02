@@ -2,15 +2,24 @@ var DRAWING_MODE = 'DRAWING_MODE';
 var ERASING_MODE = 'ERASING_MODE';
 var EDITING_MODE = 'EDITING_MODE';
 
+var PATTERNS = {
+    DRAWING_MODE: [DOT, DOT, DOT],
+    ERASING_MODE: [DOT, DASH, DOT],
+    EDITING_MODE: [DASH, DASH, DASH]
+};
+
+var DOT = 50;
+var DASH = 100;
+
 var status = DRAWING_MODE;
 var canvas = document.querySelector('canvas');
 var ctx = canvas.getContext('2d');
 var lastX = 0, lastY = 0;
+var eraserSize = 30, penSize = 2, editSize = 20;
 
-function changeMode() {
-    if (status == ERASING_MODE) status = DRAWING_MODE
-    else if (status == DRAWING_MODE) status = ERASING_MODE
-    console.log(status)
+function changeMode(mode) {
+    status = mode;
+    window.navigator.vibrate(PATTERNS[status]);
 }
 
 function draw(ctx,x,y,size) {
@@ -32,21 +41,26 @@ function draw(ctx,x,y,size) {
 }
 
 function erase(ctx,x, y, size) {
-    ctx.clearRect(x, y, 30, 30); 
+    ctx.clearRect(x - size/2, y - size/2, size, size);
 }
+
 canvas.addEventListener('touchmove', function(e) {
     var point = e.targetTouches[0];
-    console.log(status)
     switch(status) {
         case DRAWING_MODE:
-            draw(ctx, point.clientX, point.clientY, 2);
+            draw(ctx, point.clientX, point.clientY, penSize);
             break;
         case ERASING_MODE:
-            console.log('suh')
-            erase(ctx, point.clientX, point.clientY, 2);
+            erase(ctx, point.clientX, point.clientY, eraserSize);
             break;
         case EDITING_MODE:
-            window.navigator.vibrate(50);
+            for (var datum of ctx.getImageData(point.clientX - editSize/2, point.clientY - editSize/2, editSize, editSize).data) {
+                if (datum !== 0) {
+                    window.navigator.vibrate(DOT);
+                    break;
+                }
+            }
+            break;
     }
 });
 
@@ -62,3 +76,10 @@ function resizeCanvas() {
 
 resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
+
+var changeModeButtons = document.querySelectorAll('.change-mode');
+for (var i = 0; i < changeModeButtons.length; i++) {
+    changeModeButtons[i].addEventListener('click', function(e) {
+        changeMode(e.target.id);
+    });
+}

@@ -7,12 +7,38 @@ body {
     height: 100vh;
     width: 100vw;
     overflow: hidden;
+}
+
+.buttons-container {
+    width: 100px;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    height: 100vh;
+    position: absolute;
+}
+
+canvas {
+    position: absolute;
+    height: 100vh;
+    width: 100vw;
 }
 
 button {
-    background-color: black;
-    height: 100px;
-    width: 100px;
+    position: relative;
+    width: 100%;
+    z-index: 1;
+    flex-grow: 1;
+    border: none;
+}
+
+#DRAWING_MODE {
+    background-color: #00449E;
+}
+
+#ERASING_MODE {
+    background-color: #FF4136;
+}
+
+#EDITING_MODE {
+    background-color: #FFD700;
 }

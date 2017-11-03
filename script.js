@@ -2,14 +2,14 @@ var DRAWING_MODE = 'DRAWING_MODE';
 var ERASING_MODE = 'ERASING_MODE';
 var EDITING_MODE = 'EDITING_MODE';
 
+var DOT = 50;
+var DASH = 200;
+
 var PATTERNS = {
     DRAWING_MODE: [DOT, DOT, DOT],
     ERASING_MODE: [DOT, DASH, DOT],
     EDITING_MODE: [DASH, DASH, DASH]
 };
-
-var DOT = 50;
-var DASH = 100;
 
 var status = DRAWING_MODE;
 var canvas = document.querySelector('canvas');
@@ -23,6 +23,7 @@ function changeMode(mode) {
 }
 
 function draw(ctx,x,y,size) {
+    console.log(lastX, lastY);
     if (lastX && lastY && (x !== lastX || y !== lastY)) {
         ctx.fillStyle = "#000000";
         ctx.lineWidth = 2 * size;
@@ -38,13 +39,20 @@ function draw(ctx,x,y,size) {
     ctx.fill();
     lastX = x;
     lastY = y;
+    console.log('draw');
 }
 
 function erase(ctx,x, y, size) {
     ctx.clearRect(x - size/2, y - size/2, size, size);
 }
 
-canvas.addEventListener('touchmove', function(e) {
+canvas.addEventListener('touchend', function() {
+    lastX = 0;
+    lastY = 0;
+    console.log(lastX, lastY);
+});
+
+canvas.addEventListener('touchmove', _.throttle(function(e) {
     var point = e.targetTouches[0];
     switch(status) {
         case DRAWING_MODE:
@@ -56,18 +64,13 @@ canvas.addEventListener('touchmove', function(e) {
         case EDITING_MODE:
             for (var datum of ctx.getImageData(point.clientX - editSize/2, point.clientY - editSize/2, editSize, editSize).data) {
                 if (datum !== 0) {
-                    window.navigator.vibrate(DOT);
+                    window.navigator.vibrate(20);
                     break;
                 }
             }
             break;
     }
-});
-
-canvas.addEventListener('touchend', function() {
-    lastX = 0;
-    lastY = 0;
-});
+}, 75));
 
 function resizeCanvas() {
     canvas.width = window.innerWidth;

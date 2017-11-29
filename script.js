@@ -1,6 +1,7 @@
 var DRAWING_MODE = 'DRAWING_MODE';
 var ERASING_MODE = 'ERASING_MODE';
 var EDITING_MODE = 'EDITING_MODE';
+var EXPORT = 'EXPORT';
 
 var DOT = 50;
 var DASH = 200;
@@ -14,8 +15,32 @@ var PATTERNS = {
 var status = DRAWING_MODE;
 var canvas = document.querySelector('canvas');
 var ctx = canvas.getContext('2d');
+var svgctx = new C2S(canvas.width, canvas.height);
 var lastX = 0, lastY = 0;
 var eraserSize = 30, penSize = 2, editSize = 20;
+
+function handleClick(id) {
+    switch (id) {
+        case DRAWING_MODE:
+        case ERASING_MODE:
+        case EDITING_MODE:
+            changeMode(id);
+            break;
+        case EXPORT:
+            exportToSVG();
+            break;
+    }
+}
+
+function exportToSVG() {
+    var drawing = svgctx.getSerializedSvg(true);
+    var a = window.document.createElement('a');    
+    a.href = window.URL.createObjectURL(new Blob([drawing], {type: 'image/svg+xml'}));
+    a.download = 'drawing.svg';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
 
 function changeMode(mode) {
     status = mode;
@@ -23,7 +48,6 @@ function changeMode(mode) {
 }
 
 function draw(ctx,x,y,size) {
-    console.log(lastX, lastY);
     if (lastX && lastY && (x !== lastX || y !== lastY)) {
         ctx.fillStyle = "#000000";
         ctx.lineWidth = 2 * size;
@@ -31,15 +55,27 @@ function draw(ctx,x,y,size) {
         ctx.moveTo(lastX, lastY);
         ctx.lineTo(x, y);
         ctx.stroke();
+
+        svgctx.fillStyle = "#000000";
+        svgctx.lineWidth = 2 * size;
+        svgctx.beginPath();
+        svgctx.moveTo(lastX, lastY);
+        svgctx.lineTo(x, y);
+        svgctx.stroke();
     }
     ctx.fillStyle = "#000000";
     ctx.beginPath();
     ctx.arc(x, y, size, 0, Math.PI*2, true);
     ctx.closePath();
     ctx.fill();
+
+    svgctx.fillStyle = "#000000";
+    svgctx.beginPath();
+    svgctx.arc(x, y, size, 0, Math.PI*2, true);
+    svgctx.closePath();
+    svgctx.fill();
     lastX = x;
     lastY = y;
-    console.log('draw');
 }
 
 function erase(ctx,x, y, size) {
@@ -47,9 +83,10 @@ function erase(ctx,x, y, size) {
 }
 
 canvas.addEventListener('touchend', function() {
-    lastX = 0;
-    lastY = 0;
-    console.log(lastX, lastY);
+    setTimeout(function() {
+        lastX = 0;
+        lastY = 0;
+    }, 30)
 });
 
 canvas.addEventListener('touchmove', _.throttle(function(e) {
@@ -70,7 +107,9 @@ canvas.addEventListener('touchmove', _.throttle(function(e) {
             }
             break;
     }
-}, 75));
+}, 75, {
+    'trailing': true
+}));
 
 function resizeCanvas() {
     canvas.width = window.innerWidth;
@@ -83,6 +122,6 @@ window.addEventListener('resize', resizeCanvas);
 var changeModeButtons = document.querySelectorAll('.change-mode');
 for (var i = 0; i < changeModeButtons.length; i++) {
     changeModeButtons[i].addEventListener('click', function(e) {
-        changeMode(e.target.id);
+        handleClick(e.target.id);
     });
 }

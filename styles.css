@@ -17,6 +17,10 @@ body {
     position: absolute;
 }
 
+.svg-button {
+    right: 0;
+}
+
 canvas {
     position: absolute;
     height: 100vh;

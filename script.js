@@ -3,6 +3,54 @@ var ERASING_MODE = 'ERASING_MODE';
 var EDITING_MODE = 'EDITING_MODE';
 var EXPORT = 'EXPORT';
 
+var timeout;
+var lastTap = 0;
+var listening = false;
+
+var SpeechRecognition = SpeechRecognition || webkitSpeechRecognition
+var SpeechGrammarList = SpeechGrammarList || webkitSpeechGrammarList
+var SpeechRecognitionEvent = SpeechRecognitionEvent || webkitSpeechRecognitionEvent
+
+var recognition = new SpeechRecognition();
+var speechRecognitionList = new SpeechGrammarList();
+var synth = window.speechSynthesis;
+
+
+speechRecognitionList.addFromString(grammar, 1);
+recognition.grammars = speechRecognitionList;
+//recognition.continuous = false;
+recognition.lang = 'en-US';
+recognition.interimResults = false;
+recognition.maxAlternatives = 1;
+recognition.onresult = function(event) {
+    var last = event.results.length - 1;
+    var word = event.results[last][0].transcript;
+    var utterThis = new SpeechSynthesisUtterance(word);
+    
+    switch (word) {
+        case "draw":
+            changeMode(DRAWING_MODE);
+            synth.speak(utterThis);
+            break;
+        case "feel":
+            changeMode(EDITING_MODE);
+            synth.speak(utterThis);
+            break;
+        case "erase":
+            changeMode(ERASING_MODE);
+            synth.speak(utterThis);
+            break;
+    }
+    console.log('Confidence: ' + event.results[0][0].confidence);
+}
+recognition.onspeechend = function() {
+    recognition.stop();
+    listening = false;
+}
+
+var colors = ['draw', 'erase', 'edit'];
+var grammar = '#JSGF V1.0; grammar colors; public <color> = ' + colors.join(' | ') + ' ;'
+
 var DOT = 50;
 var DASH = 200;
 
@@ -18,6 +66,7 @@ var ctx = canvas.getContext('2d');
 var svgctx = new C2S(canvas.width, canvas.height);
 var lastX = 0, lastY = 0;
 var eraserSize = 30, penSize = 2, editSize = 20;
+
 
 function handleClick(id) {
     switch (id) {
@@ -82,7 +131,28 @@ function erase(ctx,x, y, size) {
     ctx.clearRect(x - size/2, y - size/2, size, size);
 }
 
-canvas.addEventListener('touchend', function() {
+canvas.addEventListener('touchend', function(e) {
+    var currentTime = new Date().getTime();
+    var tapLength = currentTime - lastTap;        
+
+    e.preventDefault();
+    clearTimeout(timeout);
+
+    if(tapLength < 500 && tapLength > 0){
+        if (!listening) {
+            recognition.start();
+            listening = true;
+        }
+
+        //Double Tap/Click
+
+    }else{
+        timeout = setTimeout(function(){
+            //Single Tap/Click code here
+            clearTimeout(timeout); 
+        }, 500);
+    }
+    lastTap = currentTime;
     setTimeout(function() {
         lastX = 0;
         lastY = 0;
@@ -125,3 +195,4 @@ for (var i = 0; i < changeModeButtons.length; i++) {
         handleClick(e.target.id);
     });
 }
+
